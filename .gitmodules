@@ -1,0 +1,3 @@
+[submodule "artmatch-frontend"]
+	path = artmatch-frontend
+	url = https://github.com/Desmond3000/artmatch-frontend.git
