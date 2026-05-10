@@ -1,6 +1,6 @@
 from sklearn.metrics.pairwise import cosine_similarity
 from byol_pytorch import BYOL
-from sklearn.base impor BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import *

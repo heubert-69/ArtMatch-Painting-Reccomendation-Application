@@ -1,34 +1,28 @@
+﻿import requests
 import io
-import cv2
 import numpy as np
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
-from google.oauth2 import service_account
-
-SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
-
-def get_drive_service():
-    creds = service_account.Credentials.from_service_account_file(
-        "service_account.json",
-        scopes=SCOPES
-    )
-    return build("drive", "v3", credentials=creds)
+from PIL import Image
 
 
 def download_image_as_array(file_id):
-    service = get_drive_service()
-    request = service.files().get_media(fileId=file_id)
+    session = requests.Session()
 
-    fh = io.BytesIO()
-    downloader = MediaIoBaseDownload(fh, request)
+    url = "https://drive.google.com/uc?export=download&id=" + file_id
 
-    done = False
-    while not done:
-        _, done = downloader.next_chunk()
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
-    fh.seek(0)
+    response = session.get(url, headers=headers, stream=True)
 
-    file_bytes = np.frombuffer(fh.read(), np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    if response.status_code != 200:
+        raise Exception(f"Drive download failed: {response.status_code}")
 
-    return img
+    content_type = response.headers.get("Content-Type", "")
+
+    if "text/html" in content_type:
+        raise ValueError("Got HTML instead of image → check file permissions or invalid file_id")
+
+    img = Image.open(io.BytesIO(response.content)).convert("RGB")
+
+    return np.array(img)
