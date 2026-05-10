@@ -1,13 +1,12 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // your Flask backend URL
+  baseURL: 'http://127.0.0.1:5000/api', // your Flask backend URL
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-// Auth endpoints
 export const authAPI = {
   login: (credentials) => api.post('/login', credentials),
   register: (userData) => api.post('/register', userData),
@@ -20,7 +19,8 @@ export const paintingsAPI = {
   getOne: (id) => api.get(`/paintings/${id}`),
   create: (data) => api.post('/paintings', data),
   update: (id, data) => api.put(`/paintings/${id}`, data),
-  delete: (id) => api.delete(`/paintings/${id}`)
+  delete: (id) => api.delete(`/paintings/${id}`),
+  recommend: (data) => api.post('/recommend', data)
 }
 
 // User endpoints

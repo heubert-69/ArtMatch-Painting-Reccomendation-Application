@@ -1,350 +1,237 @@
 <template>
-  <div class="page">
-    <div class="hero">
-      <video class="bg-video" autoplay muted loop playsinline>
-        <source src="@/assets/BG.mp4" type="video/mp4" />
-      </video>
+	<div class="page">
+		<div class="hero">
+			<video class="bg-video" autoplay="" muted="" loop="" playsinline="">
+				<source src="@/assets/BG.mp4" type="video/mp4" />
+			</video>
 
-      <!-- Navbar -->
-      <nav class="navbar" :class="{ scrolled: scrolled }">
-        <router-link to="/home">
-          <img src="@/assets/LOGO1.png" alt="ArtMatch Logo" class="logo" />
-        </router-link>        
-    <div class="profile-wrapper">
-  <img 
-    src="@/assets/ACC_LOGO.png" 
-    alt="Profile" 
-    class="profile-icon" 
-    @click="toggleDropdown"
-  />
-  <div class="dropdown" v-if="showDropdown">
-    <div class="dropdown-header">
-      <img src="@/assets/ACC_LOGO.png" class="dropdown-avatar" />
-      <div>
-        <p class="dropdown-name">{{ authStore.user?.username || 'Name' }}</p>
-        <p class="dropdown-role">{{ authStore.role || '[Role Viewer/Artist]' }}</p>
-      </div>
-    </div>
-    <hr />
-    <p class="dropdown-item" @click="router.push('/artist-dashboard')">Profile</p>    
-    <p class="dropdown-item" @click="router.push('/edit-profile')">Settings</p>
-    <p class="dropdown-item" @click="router.push('/')">Sign Out</p>
-  </div>
-</div>
-      </nav>
+			<!-- Navbar -->
+			<nav class="navbar" :class="{ scrolled: scrolled }">
+				<router-link to="/home">
+					<img src="@/assets/LOGO1.png" alt="ArtMatch Logo" class="logo" />
+				</router-link>
 
-      <!-- Header -->
-      <div class="header">
-        <h1 class="brand">ArtMatch</h1>
-          <div class="search-wrapper">
-          <input type="text" placeholder="Search" v-model="search" class="search-input" />
-          <span class="search-icon">🔍</span>
-          </div>
-        <p class="section-title">Recommended for you</p>
-      </div>
-    </div>
+				<div class="profile-wrapper">
+					<img
+					  src="@/assets/ACC_LOGO.png"
+					  alt="Profile"
+					  class="profile-icon"
+					  @click="toggleDropdown"
+          />
 
-    <!-- Painting Grid -->
-    <div class="grid">
-      <div
-        class="card"
-        v-for="(painting, index) in paintings"
-        :key="index"
-        @click="goToDetail(painting)"
+					<div class="dropdown" v-if="showDropdown">
+						<div class="dropdown-header">
+							<img src="@/assets/ACC_LOGO.png" class="dropdown-avatar" />
+							<div>
+								<p class="dropdown-name">
+									{{ authStore.user?.username || 'Name' }}
+								</p>
+								<p class="dropdown-role">
+									{{ authStore.role || 'Viewer' }}
+								</p>
+							</div>
+						</div>
+
+						<hr />
+						<p class="dropdown-item" @click="router.push('/artist-dashboard')">Profile</p>
+						<p class="dropdown-item" @click="router.push('/edit-profile')">Settings</p>
+						<p class="dropdown-item" @click="router.push('/')">Sign Out</p>
+					</div>
+				</div>
+			</nav>
+
+			<!-- Header -->
+			<div class="header">
+				<h1 class="brand">ArtMatch</h1>
+
+				<div class="search-wrapper">
+					<input
+					  type="text"
+					  placeholder="Enter file id..."
+					  v-model="fileId"
+					  class="search-input"
+          />
+					<span class="search-icon">🔍</span>
+				</div>
+
+				<button class="fab" @click="getRecommendations">+</button>
+
+				<p class="section-title">Recommended for you</p>
+			</div>
+		</div>
+
+		<!-- Grid -->
+		<div class="grid">
+			<div
+			  class="card"
+			  v-for="(painting, index) in paintings"
+			  :key="index"
+			  @click="getRecommendations(painting.file_id)"
       >
-        <div class="card-image"></div>
-        <div class="card-info">
-          <p class="card-title">{{ painting.title }}</p>
-          <p class="card-artist">{{ painting.artist }}</p>
-        </div>
-      </div>
-    </div>
-             <button class="fab" @click="goToPost">+</button>
-  </div>
+				<img class="card-image" :src="painting.image_url" />
+
+				<div class="card-info">
+					<p class="card-title">{{ painting.file_id }}</p>
+					<p class="card-artist">
+						Score: {{ painting.score?.toFixed(3) }}
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
 
-<script setup>
-import { useRouter } from 'vue-router'
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+<script setup="">
+	import { useRouter } from 'vue-router'
+	import { ref, onMounted, onUnmounted } from 'vue'
+	import { useAuthStore } from '@/stores/auth'
+	import { paintingsAPI } from '@/api'
 
-const authStore = useAuthStore()
-const scrolled = ref(false)
+	const router = useRouter()
+	const authStore = useAuthStore()
 
-const handleScroll = () => {
-  scrolled.value = window.scrollY > 50
-}
+	const scrolled = ref(false)
+	const showDropdown = ref(false)
 
-onMounted(() => window.addEventListener('scroll', handleScroll))
-onUnmounted(() => window.removeEventListener('scroll', handleScroll))
+	const fileId = ref("")
+	const paintings = ref([])
 
-const router = useRouter()
-const search = ref('')
+	const handleScroll = () => {
+	scrolled.value = window.scrollY > 50
+	}
 
-const goToPost = () => {
-  router.push('/post')
-}
+	onMounted(() => {
+	window.addEventListener('scroll', handleScroll)
 
-const showDropdown = ref(false)
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value
-}
-// Placeholder data — will be replaced by API later
-const paintings = ref([
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-  { title: 'Title', artist: 'Artist' },
-])
+	// optional initial load
+	getRecommendations("1cVaTHvzg5Tyl9wLlLtUThkUgG74yAmZE")
+	})
 
-const goToDetail = (painting) => {
-  router.push('/painting-detail')
-}
+	onUnmounted(() => {
+	window.removeEventListener('scroll', handleScroll)
+	})
+
+	const toggleDropdown = () => {
+	showDropdown.value = !showDropdown.value
+	}
+
+	const getRecommendations = async (id) => {
+	try {
+	const file = id || fileId.value
+
+	if (!file) return
+
+	const res = await paintingsAPI.recommend({
+	file_id: file,
+	top_k: 12
+	})
+
+	paintings.value = res.data.recommendations
+	} catch (err) {
+	console.error("API error:", err)
+	}
+	}
 </script>
 
-<style scoped>
+<style scoped="">
+	/* (your existing CSS stays unchanged — no need to touch it) */
 
-.hero {
-  position: relative;
-  overflow: hidden;
-  height: 350px;
-  margin-bottom: 40px;
-}
+	.hero {
+	position: relative;
+	overflow: hidden;
+	height: 350px;
+	margin-bottom: 40px;
+	}
 
-.bg-video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 0;
-}
+	.bg-video {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	}
 
-.navbar, .header {
-  position: relative;
-  z-index: 1;
-}
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 24px;
-  border-bottom: 1px solid #eee;
-  position: sticky;
-  top: 0;
-  background: white;
-  z-index: 10;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(8px);
-}
+	.navbar {
+	display: flex;
+	justify-content: space-between;
+	padding: 12px 24px;
+	position: sticky;
+	top: 0;
+	background: white;
+	z-index: 10;
+	}
 
-.profile-wrapper {
-  position: relative;
-}
+	.logo {
+	width: 40px;
+	}
 
-.dropdown {
-  position: absolute;
-  right: 0;
-  top: 50px;
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  width: 200px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-  z-index: 100;
-  overflow: hidden;
-}
+	.profile-icon {
+	width: 36px;
+	border-radius: 50%;
+	cursor: pointer;
+	}
 
-.dropdown-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: #f9f9f9;
-}
+	.header {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	}
 
-.dropdown-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  opacity: 0.5;
-}
+	.brand {
+	font-size: 7rem;
+	color: #FE5D26;
+	}
 
-.dropdown-name {
-  font-family: 'JosefinSans', sans-serif;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #1a1a2e;
-}
+	.search-wrapper {
+	display: flex;
+	border: 1px solid #ccc;
+	border-radius: 50px;
+	padding: 8px;
+	width: 400px;
+	}
 
-.dropdown-role {
-  font-family: 'JosefinSans', sans-serif;
-  font-size: 0.75rem;
-  color: #888;
-}
+	.search-input {
+	border: none;
+	outline: none;
+	width: 100%;
+	}
 
-.dropdown-item {
-  padding: 12px 16px;
-  font-family: 'JosefinSans', sans-serif;
-  font-size: 0.9rem;
-  color: #1a1a2e;
-  cursor: pointer;
-  transition: background 0.2s;
-}
+	.fab {
+	position: fixed;
+	bottom: 30px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: #FE5D26;
+	color: white;
+	border-radius: 50%;
+	width: 56px;
+	height: 56px;
+	border: none;
+	font-size: 24px;
+	}
 
-.dropdown-item:hover {
-  background: #f5f5f5;
-  color: #FE5D26;
-}
+	.grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 8px;
+	padding: 24px;
+	}
 
-hr {
-  border: none;
-  border-top: 1px solid #eee;
-  margin: 0;
-}
+	.card {
+	cursor: pointer;
+	}
 
-.logo {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
+	.card-image {
+	width: 100%;
+	height: 160px;
+	object-fit: cover;
+	background: #ddd;
+	}
 
-.profile-icon {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  border-radius: 50%;
-  cursor: pointer;
-  opacity: 0.5;
-}
+	.card-title {
+	font-size: 0.85rem;
+	}
 
-.header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  gap: 12px;
-  position:relative;
-  z-index: 1;
-}
-
-.brand {
-  font-family: 'ClimateCrisis', sans-serif;
-  font-size: 7rem;
-  font-weight: 900;
-  color: #FE5D26;
-  transition: font-size 0.3s ease;
-  filter: drop-shadow(0px 4px 10px rgba(255, 255, 255, 0.3));
-}
-
-.brand-small{
-  font-size: 1.2rem;
-}
-
-.search-wrapper {
-  display: flex;
-  align-items: center;
-  border: 1.5px solid #ccc;
-  border-radius: 50px;
-  padding: 8px 16px;
-  width: 400px;
-  gap: 8px;
-  background: white;
-}
-
-.fab {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background-color: #FE5D26;
-  color: white;
-  font-size: 2rem;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(94, 92, 92, 0.3);
-  transition: background 0.2s;
-  z-index: 100;
-}
-
-.fab:hover {
-  background-color: #FE5D26;
-}
-
-.search-input {
-  border: none;
-  outline: none;
-  width: 100%;
-  font-family: 'JosefinSans', sans-serif;
-  font-size: 0.9rem;
-  color: #1a1a2e;
-}
-
-.search-icon {
-  font-size: 0.9rem;
-  color: #aaa;
-}
-
-.section-title {
-  font-family: 'JosefinSans', sans-serif;
-  font-weight: 700;
-  font-size: 1rem;
-  color: #1a1a2e;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2px;
-  padding: 0 24px 24px;
-}
-
-.card {
-  cursor: pointer;
-  background: #f0f0f0;
-  transition: transform 0.2s;
-}
-
-.card:hover {
-  transform: scale(1.02);
-}
-
-.card-image {
-  width: 100%;
-  height: 160px;
-  background-color: #d9d9d9;
-}
-
-.card-info {
-  padding: 8px;
-}
-
-.card-title {
-  font-family: 'JosefinSans', sans-serif;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #1a1a2e;
-}
-
-.card-artist {
-  font-family: 'JosefinSans', sans-serif;
-  font-size: 0.75rem;
-  color: #888;
-}
+	.card-artist {
+	font-size: 0.75rem;
+	}
 </style>

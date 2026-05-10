@@ -50,8 +50,8 @@ class BaselinePCA(BaseEstimator):
         img = img.astype(np.float32) / 255.0
         return img.flatten()
 
-    def fit(self, X, paths=None):
-        self.paths_ = paths
+    def fit(self, X, file_ids=None):
+        self.file_ids_ = file_ids
 
         X_proc = np.array([self._preprocess(img) for img in X])
 
@@ -82,7 +82,7 @@ class BaselinePCA(BaseEstimator):
         idxs = idxs[0]
         scores = scores[0]
 
-        if self.paths_ is not None:
-            return [self.paths_[i] for i in idxs], scores
+        if self.file_ids_ is not None:
+            return [self.file_ids_[i] for i in idxs], scores
 
         return idxs, scores
