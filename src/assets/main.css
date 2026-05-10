@@ -1,0 +1,32 @@
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+@font-face {
+  font-family: 'ClimateCrisis';
+  src: url('@/assets/fonts/ClimateCrisis[YEAR].ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'JosefinSans';
+  src: url('@/assets/fonts/JosefinSans-Bold.ttf') format('truetype');
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  opacity: 0.5;
+}
