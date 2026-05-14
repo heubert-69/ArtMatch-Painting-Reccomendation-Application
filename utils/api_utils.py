@@ -7,6 +7,7 @@ from model_utils import BaselinePCA
 import os
 import cv2
 from logging_utils import init_wandb
+from werkzeug.security import generate_password_hash
 from flask import send_file
 from flask_cors import CORS
 import sqlite3
@@ -127,7 +128,7 @@ def register():
         register_user(
             data["username"],
             data["email"],
-            data["password"]
+            generate_password_hash(data["password"])
         )
 
         return jsonify({
@@ -144,13 +145,8 @@ def register():
             "error": str(e)
         }), 500
 
-@app.route("/api/authenticate", methods=["POST"])
-def authenticate_user():
-    
-    data = request.json
-    email = data["email"]
-    password = data["password"]
-    
+def authenticate_user(email, password):
+
     conn = get_db()
     cursor = conn.cursor()
 

@@ -1,11 +1,10 @@
 <template>
 	<div class="page">
 		<div class="hero">
-			<video class="bg-video" autoplay="" muted="" loop="" playsinline="">
+			<video class="bg-video" autoplay muted loop playsinline>
 				<source src="@/assets/BG.mp4" type="video/mp4" />
 			</video>
 
-			<!-- Navbar -->
 			<nav class="navbar" :class="{ scrolled: scrolled }">
 				<router-link to="/home">
 					<img src="@/assets/LOGO1.png" alt="ArtMatch Logo" class="logo" />
@@ -13,11 +12,11 @@
 
 				<div class="profile-wrapper">
 					<img
-					  src="@/assets/ACC_LOGO.png"
-					  alt="Profile"
-					  class="profile-icon"
-					  @click="toggleDropdown"
-          />
+						src="@/assets/ACC_LOGO.png"
+						alt="Profile"
+						class="profile-icon"
+						@click="toggleDropdown"
+					/>
 
 					<div class="dropdown" v-if="showDropdown">
 						<div class="dropdown-header">
@@ -33,24 +32,29 @@
 						</div>
 
 						<hr />
-						<p class="dropdown-item" @click="router.push('/artist-dashboard')">Profile</p>
-						<p class="dropdown-item" @click="router.push('/edit-profile')">Settings</p>
-						<p class="dropdown-item" @click="router.push('/')">Sign Out</p>
+						<p class="dropdown-item" @click="router.push('/artist-dashboard')">
+							Profile
+						</p>
+						<p class="dropdown-item" @click="router.push('/edit-profile')">
+							Settings
+						</p>
+						<p class="dropdown-item" @click="router.push('/')">
+							Sign Out
+						</p>
 					</div>
 				</div>
 			</nav>
 
-			<!-- Header -->
 			<div class="header">
 				<h1 class="brand">ArtMatch</h1>
 
 				<div class="search-wrapper">
 					<input
-					  type="text"
-					  placeholder="Enter file id..."
-					  v-model="fileId"
-					  class="search-input"
-          />
+						type="text"
+						placeholder="Paste Google Drive Image Link..."
+						v-model="driveLink"
+						class="search-input"
+					/>
 					<span class="search-icon">🔍</span>
 				</div>
 
@@ -60,14 +64,13 @@
 			</div>
 		</div>
 
-		<!-- Grid -->
 		<div class="grid">
 			<div
-			  class="card"
-			  v-for="(painting, index) in paintings"
-			  :key="index"
-			  @click="getRecommendations(painting.file_id)"
-      >
+				class="card"
+				v-for="(painting, index) in paintings"
+				:key="index"
+				@click="getRecommendations(painting.file_id)"
+			>
 				<img class="card-image" :src="painting.image_url" />
 
 				<div class="card-info">
@@ -81,76 +84,92 @@
 	</div>
 </template>
 
-<script setup="">
-	import { useRouter } from 'vue-router'
-	import { ref, onMounted, onUnmounted } from 'vue'
-	import { useAuthStore } from '@/stores/auth'
-	import { paintingsAPI } from '@/api'
+<script setup>
+import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { paintingsAPI } from '@/api'
 
-	const router = useRouter()
-	const authStore = useAuthStore()
+const router = useRouter()
+const authStore = useAuthStore()
 
-	const scrolled = ref(false)
-	const showDropdown = ref(false)
+const scrolled = ref(false)
+const showDropdown = ref(false)
 
-	const fileId = ref("")
-	const paintings = ref([])
+const driveLink = ref("")
+const paintings = ref([])
 
-	const handleScroll = () => {
+const extractFileId = (input) => {
+	if (!input) return null
+
+	if (!input.includes("/")) return input
+
+	let match = input.match(/\/d\/([^\/]+)/)
+	if (match) return match[1]
+
+	match = input.match(/[?&]id=([^&]+)/)
+	if (match) return match[1]
+
+	return null
+}
+
+const handleScroll = () => {
 	scrolled.value = window.scrollY > 50
-	}
+}
 
-	onMounted(() => {
+onMounted(() => {
 	window.addEventListener('scroll', handleScroll)
 
-	// optional initial load
 	getRecommendations("1cVaTHvzg5Tyl9wLlLtUThkUgG74yAmZE")
-	})
 
-	onUnmounted(() => {
+	console.log("DRIVE INPUT:", driveLink.value)
+	console.log("EXTRACTED:", extractFileId(driveLink.value))
+})
+
+onUnmounted(() => {
 	window.removeEventListener('scroll', handleScroll)
-	})
+})
 
-	const toggleDropdown = () => {
+const toggleDropdown = () => {
 	showDropdown.value = !showDropdown.value
-	}
+}
 
-	const getRecommendations = async (id) => {
+const getRecommendations = async (id) => {
 	try {
-	const file = id || fileId.value
+		const file =
+			id ||
+			extractFileId(driveLink.value)
 
-	if (!file) return
+		if (!file) return
 
-	const res = await paintingsAPI.recommend({
-	file_id: file,
-	top_k: 12
-	})
+		const res = await paintingsAPI.recommend({
+			file_id: file,
+			top_k: 12
+		})
 
-	paintings.value = res.data.recommendations
+		paintings.value = res.data.recommendations
 	} catch (err) {
-	console.error("API error:", err)
+		console.error("API error:", err)
 	}
-	}
+}
 </script>
 
-<style scoped="">
-	/* (your existing CSS stays unchanged — no need to touch it) */
-
-	.hero {
+<style scoped>
+.hero {
 	position: relative;
 	overflow: hidden;
 	height: 350px;
 	margin-bottom: 40px;
-	}
+}
 
-	.bg-video {
+.bg-video {
 	position: absolute;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	}
+}
 
-	.navbar {
+.navbar {
 	display: flex;
 	justify-content: space-between;
 	padding: 12px 24px;
@@ -158,44 +177,44 @@
 	top: 0;
 	background: white;
 	z-index: 10;
-	}
+}
 
-	.logo {
+.logo {
 	width: 40px;
-	}
+}
 
-	.profile-icon {
+.profile-icon {
 	width: 36px;
 	border-radius: 50%;
 	cursor: pointer;
-	}
+}
 
-	.header {
+.header {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	}
+}
 
-	.brand {
+.brand {
 	font-size: 7rem;
 	color: #FE5D26;
-	}
+}
 
-	.search-wrapper {
+.search-wrapper {
 	display: flex;
 	border: 1px solid #ccc;
 	border-radius: 50px;
 	padding: 8px;
 	width: 400px;
-	}
+}
 
-	.search-input {
+.search-input {
 	border: none;
 	outline: none;
 	width: 100%;
-	}
+}
 
-	.fab {
+.fab {
 	position: fixed;
 	bottom: 30px;
 	left: 50%;
@@ -207,31 +226,31 @@
 	height: 56px;
 	border: none;
 	font-size: 24px;
-	}
+}
 
-	.grid {
+.grid {
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
 	gap: 8px;
 	padding: 24px;
-	}
+}
 
-	.card {
+.card {
 	cursor: pointer;
-	}
+}
 
-	.card-image {
+.card-image {
 	width: 100%;
 	height: 160px;
 	object-fit: cover;
 	background: #ddd;
-	}
+}
 
-	.card-title {
+.card-title {
 	font-size: 0.85rem;
-	}
+}
 
-	.card-artist {
+.card-artist {
 	font-size: 0.75rem;
-	}
+}
 </style>
